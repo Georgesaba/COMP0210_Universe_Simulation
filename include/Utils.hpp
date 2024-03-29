@@ -4,6 +4,7 @@
 #include <array>
 #include <string>
 #include <fftw3.h>
+#include <random>
 
 using std::vector;
 using std::array;

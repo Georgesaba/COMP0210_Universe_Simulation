@@ -33,3 +33,6 @@
 
 # build files
 build/*
+
+# fftw library installation
+fftw-3.3.10/*
