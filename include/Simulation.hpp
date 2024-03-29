@@ -12,11 +12,25 @@ public:
      * 
      */
     void run();
-private:
+
+    void fill_density_buffer();
+    void fill_potential_buffer();
+    std::vector<std::vector<std::vector<uint>>> bin_particles();
+    const fftw_complex * get_density_buffer() const;
+
+    ~Simulation();
+
+    private:
     double time_max;
     double time_step;
     particle_group particle_collection;
     double box_width;
     uint number_of_cells;
     double expansion_factor;
+
+    fftw_complex * density_buffer;
+    fftw_complex * potential_buffer;
+    fftw_complex * k_space_buffer;
+    fftw_plan forward_plan;
+    fftw_plan backward_plan;
 };

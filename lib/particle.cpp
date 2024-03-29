@@ -22,9 +22,12 @@ particle::particle(const std::array<double, 3> &initial_position){
 /**
  * @brief: Constructor for particle_group class sllowing for user input of all particle positions.
 */
-particle_group::particle_group(double width, double mass, uint num_particles, const std::vector<std::array<double,3>> &positions) : 
+particle_group::particle_group(double mass, uint num_particles, const std::vector<std::array<double,3>> &positions) : 
                             mass(mass), num_particles(num_particles) 
 {
+    if (num_particles != positions.size()){
+        throw std::invalid_argument("Error - The number of particles does not match the size of the given position vector!");
+    }
     for (uint i = 0; i < num_particles; i++){
         particles.push_back(particle(positions[i]));
     }
@@ -34,7 +37,7 @@ particle_group::particle_group(double width, double mass, uint num_particles, co
 /**
  * @brief: Constructor for particle_group class allowing for randomised assignment of particle positions inside unit cube.
 */
-particle_group::particle_group(double width, double mass, uint num_particles, uint random_seed) :
+particle_group::particle_group(double mass, uint num_particles, uint random_seed) :
                             mass(mass), num_particles(num_particles)
 {
     std::default_random_engine generator(random_seed);
