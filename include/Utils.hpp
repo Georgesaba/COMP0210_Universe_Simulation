@@ -26,3 +26,6 @@ void SaveToFile(fftw_complex* density_map, const size_t n_cells, const std::stri
  * @return vector<double> log of radial correlation function evenly spaced from r = 0 to 0.5
  */
 vector<double> correlationFunction(vector<array<double,3>> positions, int n_bins);
+
+
+void PotentialSavetoTxt(std::vector<double> potential_vec, std::vector<double> real_vec, std::string &filename);

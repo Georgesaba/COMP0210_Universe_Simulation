@@ -103,3 +103,23 @@ vector<double> correlationFunction(vector<array<double,3>> positions, int n_bins
     }
     return CR;
 }
+
+void PotentialSavetoTxt(std::vector<double> potential_vec, std::vector<double> real_vec, std::string &filename){
+
+    // Open a file in write mode
+    std::ofstream outFile(filename);
+    if (!outFile) {
+        throw std::runtime_error("Error opening file for writing.");
+    }
+
+    // Assuming all vectors are of the same length
+    size_t numElements = potential_vec.size(); // or std::min({vector1.size(), vector2.size(), vector3.size()}) for safety
+
+    for (size_t i = 0; i < numElements; ++i) {
+        // Write an element from each vector to the file, separated by a space
+        outFile << potential_vec[i] << " " << real_vec[i]  << "\n";
+    }
+
+    // Clean up
+    outFile.close();
+}

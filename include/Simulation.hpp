@@ -15,12 +15,15 @@ public:
 
     void fill_density_buffer();
     void fill_potential_buffer();
-    std::vector<std::vector<std::vector<uint>>> bin_particles();
+    
     const fftw_complex * get_density_buffer() const;
+    const fftw_complex * get_potential_buffer() const;
 
     ~Simulation();
 
     private:
+    std::vector<std::vector<std::vector<uint>>> bin_particles();
+
     double time_max;
     double time_step;
     particle_group particle_collection;

@@ -2,6 +2,8 @@
 #include "Utils.hpp"
 #include "particle.hpp"
 #include <cstring>
+#include <cmath>
+#include <iostream>
 
 Simulation::Simulation(double t_max, double t_step, particle_group collection, double W, uint num_cells, double e_factor) : 
                         time_max(t_max), time_step(t_step), particle_collection(collection), box_width(W), number_of_cells(num_cells),
@@ -19,7 +21,7 @@ Simulation::Simulation(double t_max, double t_step, particle_group collection, d
     std::memset(k_space_buffer, 0, sizeof(fftw_complex) * buffer_length);
 
     // assign plans
-    forward_plan = fftw_plan_dft_3d(number_of_cells, number_of_cells, number_of_cells, density_buffer, potential_buffer, FFTW_FORWARD, FFTW_MEASURE);
+    forward_plan = fftw_plan_dft_3d(number_of_cells, number_of_cells, number_of_cells, density_buffer, k_space_buffer, FFTW_FORWARD, FFTW_MEASURE);
     backward_plan = fftw_plan_dft_3d(number_of_cells, number_of_cells, number_of_cells, k_space_buffer, potential_buffer, FFTW_BACKWARD, FFTW_MEASURE);
 }
 
@@ -63,13 +65,32 @@ void Simulation::fill_density_buffer(){
 }
 
 void Simulation::fill_potential_buffer(){
+    uint total_size = number_of_cells * number_of_cells * number_of_cells;
     fftw_execute(forward_plan);
-    // TODO: finish
+    for (uint index = 0; index < total_size; index++){
+        uint i = index / (number_of_cells * number_of_cells);
+        uint j = (index / number_of_cells) % number_of_cells;
+        uint k = index % number_of_cells;
+        double norm_factor;
 
-
+        if ((i == 0) && (j == 0) && (k == 0)){
+            norm_factor = 0;
+        }
+        else{
+            double cell_num = number_of_cells;
+            norm_factor = -4 * M_PI * box_width * box_width/(i * i + j * j + k * k) * 
+             (1/(8 * cell_num * cell_num * cell_num)); //scale by -4*pi/k^2 and normalisation factor
+        }
+        k_space_buffer[index][0] *= norm_factor;
+        k_space_buffer[index][1] *= norm_factor;
+    }
     fftw_execute(backward_plan);
 }
 
 const fftw_complex* Simulation::get_density_buffer() const {
     return density_buffer;
+}
+
+const fftw_complex* Simulation::get_potential_buffer() const{
+    return potential_buffer;
 }
