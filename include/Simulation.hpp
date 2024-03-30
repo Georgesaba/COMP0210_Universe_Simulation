@@ -24,8 +24,6 @@ public:
     ~Simulation();
 
     private:
-    std::vector<std::vector<std::vector<uint>>> bin_particles();
-
     double time_max;
     double time_step;
     particle_group particle_collection;

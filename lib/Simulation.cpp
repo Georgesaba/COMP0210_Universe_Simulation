@@ -40,27 +40,17 @@ void Simulation::run()
 
 }
 
-std::vector<std::vector<std::vector<uint>>> Simulation::bin_particles(){
-    std::vector<std::vector<std::vector<uint>>> counts(number_of_cells, std::vector<std::vector<uint>>(number_of_cells, std::vector<uint>(number_of_cells, 0)));
-    //count how many particles in each bin
-    for (uint i = 0; i < particle_collection.num_particles; i++){
-        particle& current_particle = particle_collection.particles[i];
-        counts[std::floor(current_particle.position[0] * number_of_cells)][std::floor(current_particle.position[1] * number_of_cells)]
-        [std::floor(current_particle.position[2] * number_of_cells)]++;
-    }
-    return counts;
-}
-
 void Simulation::fill_density_buffer(){
-    std::vector<std::vector<std::vector<uint>>> counts = bin_particles();
-    for (uint i = 0; i < number_of_cells; i++){
-        for (uint j = 0; j < number_of_cells; j++){
-            for (uint k = 0; k < number_of_cells; k++){
-                uint index = k + number_of_cells * (j + number_of_cells * i);
-                double cell_width = (box_width/number_of_cells);
-                density_buffer[index][0] = counts[i][j][k] * particle_collection.mass / (cell_width * cell_width * cell_width);
-            }
-        }
+    std::memset(density_buffer, 0, sizeof(fftw_complex) * number_of_cells * number_of_cells * number_of_cells);
+    for (uint index = 0; index < particle_collection.num_particles; index++){
+        particle& current_particle = particle_collection.particles[index];
+        uint i = std::floor(current_particle.position[0] * number_of_cells);
+        uint j = std::floor(current_particle.position[1] * number_of_cells);
+        uint k = std::floor(current_particle.position[2] * number_of_cells);
+        
+        uint ind = k + number_of_cells * (j + number_of_cells * i);
+        double cell_width = (box_width/number_of_cells);
+        density_buffer[ind][0] += particle_collection.mass / (cell_width * cell_width * cell_width);
     }
 }
 
