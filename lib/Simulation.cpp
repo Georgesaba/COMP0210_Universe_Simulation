@@ -37,7 +37,13 @@ Simulation::~Simulation(){
 
 void Simulation::run()
 {
-
+    uint t = 0;
+    while (t < time_max){
+        fill_density_buffer();
+        fill_potential_buffer();
+        update_particles();
+        box_expansion();
+    }
 }
 
 void Simulation::fill_density_buffer(){
@@ -146,6 +152,7 @@ void Simulation::box_expansion(){
         particle_collection.particles[i].velocity[2] /= expansion_factor;
     }
 }
+
 
 const fftw_complex* Simulation::get_density_buffer() const {
     return density_buffer;
