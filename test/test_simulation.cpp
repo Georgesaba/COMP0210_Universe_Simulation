@@ -3,6 +3,7 @@
 #include <cmath>
 #include "Simulation.hpp"
 #include "Utils.hpp"
+#include <iostream>
 
 using namespace Catch::Matchers;
 
@@ -135,4 +136,150 @@ TEST_CASE("Test potential function for single particle", "[Potential_Calc]")
     }
     // std::string filename = "test_potential/test.txt";
     // PotentialSavetoTxt(pot_store, expected_pot_store, filename);
+}
+
+TEST_CASE("Test gradient function for periodic f(x) = sin(x) + cos(y) + sin(z)", "[Gradient_Function]"){
+    uint num_cells = 100;
+    double width = 2*M_PI;
+
+    uint buffer_length = num_cells * num_cells * num_cells;
+    fftw_complex * test_func_buffer = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * buffer_length);
+    std::memset(test_func_buffer, 0, sizeof(fftw_complex) * buffer_length);
+    std::vector<double> func(buffer_length, 0);
+    std::vector<std::vector<std::vector<std::array<double, 3>>>> test_grad;
+    
+    for (uint i = 0; i < num_cells; i++){
+        std::vector<std::vector<std::array<double, 3>>> test_grad_jk;
+        for (uint j = 0; j < num_cells; j++){
+            std::vector<std::array<double, 3>> test_grad_k;
+            for (uint k = 0; k < num_cells; k++){
+                double x = width * (i + 0.5)/num_cells;
+                double y = width * (j + 0.5)/num_cells;
+                double z = width * (k + 0.5)/num_cells;
+                test_func_buffer[k + num_cells * (j + num_cells * i)][0] = std::sin(x) + std::cos(y) + std::sin(z);
+                std::array<double, 3> test_grad_section;
+                test_grad_section[0] = std::cos(x);
+                test_grad_section[1] = - std::sin(y);
+                test_grad_section[2] =  std::cos(z);
+                
+                test_grad_k.push_back(test_grad_section);
+            }
+            test_grad_jk.push_back(test_grad_k);
+        }
+        test_grad.push_back(test_grad_jk);
+    }
+    particle_group particles(1, 1, {{0.5, 0.5, 0.5}});
+    Simulation sim(10, 1, particles, width, num_cells, 3);
+
+    std::vector<std::vector<std::vector<std::array<double, 3>>>> grad = sim.calculate_gradient(test_func_buffer);
+    
+    for (uint i = 0; i < num_cells; i++){
+        for (uint j = 0; j < num_cells; j++){
+            for (uint k = 0; k < num_cells; k++){
+                REQUIRE_THAT(grad[i][j][k][0], WithinRel(test_grad[i][j][k][0], 1e-3));
+                REQUIRE_THAT(grad[i][j][k][1], WithinRel(test_grad[i][j][k][1], 1e-3));
+                REQUIRE_THAT(grad[i][j][k][2], WithinRel(test_grad[i][j][k][2], 1e-3));
+            }
+        }
+    }
+    
+    fftw_free(test_func_buffer);
+}
+
+
+TEST_CASE("Test gradient function for periodic f(x) = sin(x) + sin(y) + sin(z)", "[Gradient_Function]"){
+    uint num_cells = 100;
+    double width = 2*M_PI;
+
+    uint buffer_length = num_cells * num_cells * num_cells;
+    fftw_complex * test_func_buffer = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * buffer_length);
+    std::memset(test_func_buffer, 0, sizeof(fftw_complex) * buffer_length);
+    std::vector<double> func(buffer_length, 0);
+    std::vector<std::vector<std::vector<std::array<double, 3>>>> test_grad;
+    
+    for (uint i = 0; i < num_cells; i++){
+        std::vector<std::vector<std::array<double, 3>>> test_grad_jk;
+        for (uint j = 0; j < num_cells; j++){
+            std::vector<std::array<double, 3>> test_grad_k;
+            for (uint k = 0; k < num_cells; k++){
+                double x = width * (i + 0.5)/num_cells;
+                double y = width * (j + 0.5)/num_cells;
+                double z = width * (k + 0.5)/num_cells;
+                test_func_buffer[k + num_cells * (j + num_cells * i)][0] = std::sin(x) + std::sin(y) + std::sin(z);
+                std::array<double, 3> test_grad_section;
+                test_grad_section[0] = std::cos(x);
+                test_grad_section[1] = std::cos(y);
+                test_grad_section[2] =  std::cos(z);
+                
+                test_grad_k.push_back(test_grad_section);
+            }
+            test_grad_jk.push_back(test_grad_k);
+        }
+        test_grad.push_back(test_grad_jk);
+    }
+    particle_group particles(1, 1, {{0.5, 0.5, 0.5}});
+    Simulation sim(10, 1, particles, width, num_cells, 3);
+
+    std::vector<std::vector<std::vector<std::array<double, 3>>>> grad = sim.calculate_gradient(test_func_buffer);
+    
+    for (uint i = 0; i < num_cells; i++){
+        for (uint j = 0; j < num_cells; j++){
+            for (uint k = 0; k < num_cells; k++){
+                REQUIRE_THAT(grad[i][j][k][0], WithinRel(test_grad[i][j][k][0], 1e-3));
+                REQUIRE_THAT(grad[i][j][k][1], WithinRel(test_grad[i][j][k][1], 1e-3));
+                REQUIRE_THAT(grad[i][j][k][2], WithinRel(test_grad[i][j][k][2], 1e-3));
+            }
+        }
+    }
+    
+    fftw_free(test_func_buffer);
+}
+
+
+TEST_CASE("Test gradient function for periodic f(x) = cos^2(x) + sin^2(y) + cos(x)", "[Gradient_Function]"){
+    uint num_cells = 100;
+    double width =2 * M_PI;
+
+    uint buffer_length = num_cells * num_cells * num_cells;
+    fftw_complex * test_func_buffer = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * buffer_length);
+    std::memset(test_func_buffer, 0, sizeof(fftw_complex) * buffer_length);
+    std::vector<double> func(buffer_length, 0);
+    std::vector<std::vector<std::vector<std::array<double, 3>>>> test_grad;
+    
+    for (uint i = 0; i < num_cells; i++){
+        std::vector<std::vector<std::array<double, 3>>> test_grad_jk;
+        for (uint j = 0; j < num_cells; j++){
+            std::vector<std::array<double, 3>> test_grad_k;
+            for (uint k = 0; k < num_cells; k++){
+                double x = width * (i + 0.5)/num_cells;
+                double y = width * (j + 0.5)/num_cells;
+                double z = width * (k + 0.5)/num_cells;
+                test_func_buffer[k + num_cells * (j + num_cells * i)][0] = std::cos(x) * std::cos(x) + std::sin(y) * std::sin(y) + std::cos(z);
+                std::array<double, 3> test_grad_section;
+                test_grad_section[0] = -2 * std::sin(x) * std::cos(x);
+                test_grad_section[1] = 2 * std::sin(y) * std::cos(y);
+                test_grad_section[2] =  -std::sin(z);
+                
+                test_grad_k.push_back(test_grad_section);
+            }
+            test_grad_jk.push_back(test_grad_k);
+        }
+        test_grad.push_back(test_grad_jk);
+    }
+    particle_group particles(1, 1, {{0.5, 0.5, 0.5}});
+    Simulation sim(10, 1, particles, width, num_cells, 3);
+
+    std::vector<std::vector<std::vector<std::array<double, 3>>>> grad = sim.calculate_gradient(test_func_buffer);
+    
+    for (uint i = 0; i < num_cells; i++){
+        for (uint j = 0; j < num_cells; j++){
+            for (uint k = 0; k < num_cells; k++){
+                REQUIRE_THAT(grad[i][j][k][0], WithinRel(test_grad[i][j][k][0], 0.3));
+                REQUIRE_THAT(grad[i][j][k][1], WithinRel(test_grad[i][j][k][1], 0.3));
+                REQUIRE_THAT(grad[i][j][k][2], WithinRel(test_grad[i][j][k][2], 0.3));
+            }
+        }
+    }
+    
+    fftw_free(test_func_buffer);
 }

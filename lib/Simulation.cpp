@@ -67,25 +67,61 @@ void Simulation::fill_density_buffer(){
 void Simulation::fill_potential_buffer(){
     uint total_size = number_of_cells * number_of_cells * number_of_cells;
     fftw_execute(forward_plan);
-    for (uint index = 0; index < total_size; index++){
+    k_space_buffer[0][0] = 0; //set first element of the buffer to 0.
+    k_space_buffer[0][1] = 0;
+    
+    for (uint index = 1; index < total_size; index++){
         uint i = index / (number_of_cells * number_of_cells);
         uint j = (index / number_of_cells) % number_of_cells;
         uint k = index % number_of_cells;
-        double norm_factor;
-
-        if ((i == 0) && (j == 0) && (k == 0)){
-            norm_factor = 0;
-        }
-        else{
-            double cell_num = number_of_cells;
-            norm_factor = -4 * M_PI * box_width * box_width/(i * i + j * j + k * k) * 
-             (1/(8 * cell_num * cell_num * cell_num)); //scale by -4*pi/k^2 and normalisation factor
-        }
+        
+        double cell_num = number_of_cells; //cast to double
+        double norm_factor = -4 * M_PI * box_width * box_width/(i * i + j * j + k * k) * 
+            (1/(8 * cell_num * cell_num * cell_num)); //scale by -4*pi/k^2 and normalisation factor
+    
         k_space_buffer[index][0] *= norm_factor;
         k_space_buffer[index][1] *= norm_factor;
     }
     fftw_execute(backward_plan);
 }
+
+std::vector<std::vector<std::vector<std::array<double, 3>>>> Simulation::calculate_gradient(fftw_complex * potential){
+    double cell_width = box_width/number_of_cells;
+
+    std::vector<std::vector<std::vector<std::array<double, 3>>>> gradient(number_of_cells, std::vector<std::vector<std::array<double, 3>>>(
+        number_of_cells, std::vector<std::array<double, 3>>(number_of_cells, std::array<double, 3>{0, 0, 0}))); // Initialize each std::array<double, 3> with zeros
+    
+    for (int i = 0; i < number_of_cells; i++){
+        for (int j = 0; j < number_of_cells; j++){
+            for (int k = 0; k < number_of_cells; k++){
+                int i_high = i + 1;
+                int i_low = i - 1;
+                int j_high = j + 1;
+                int j_low = j - 1;
+                int k_high = k + 1;
+                int k_low = k - 1;
+
+                if (i_high >= number_of_cells){i_high -= number_of_cells;}
+                if (i_low < 0){i_low += number_of_cells;}
+                if (j_high >= number_of_cells){j_high -= number_of_cells;}
+                if (j_low < 0){j_low += number_of_cells;}
+                if (k_high >= number_of_cells){k_high -= number_of_cells;}
+                if (k_low < 0){k_low += number_of_cells;}
+
+                gradient[i][j][k][0] = (potential[k + number_of_cells * (j + number_of_cells * i_high)][0] 
+                - potential[k + number_of_cells * (j + number_of_cells * i_low)][0])/(2 * cell_width);
+
+                gradient[i][j][k][1] = (potential[k + number_of_cells * (j_high + number_of_cells * (i))][0] 
+                - potential[k + number_of_cells * (j_low + number_of_cells * i)][0])/(2 * cell_width);
+                
+                gradient[i][j][k][2] = (potential[k_high + number_of_cells * (j + number_of_cells * (i))][0] 
+                - potential[k_low + number_of_cells * (j + number_of_cells * i)][0])/(2 * cell_width);
+            }
+        }
+    }
+    return gradient;
+}
+
 
 const fftw_complex* Simulation::get_density_buffer() const {
     return density_buffer;

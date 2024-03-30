@@ -1,6 +1,7 @@
 #pragma once
 #include "particle.hpp"
 #include <fftw3.h>
+#include <vector>
 
 class Simulation
 {
@@ -15,6 +16,7 @@ public:
 
     void fill_density_buffer();
     void fill_potential_buffer();
+    std::vector<std::vector<std::vector<std::array<double, 3>>>> calculate_gradient(fftw_complex * potential);
     
     const fftw_complex * get_density_buffer() const;
     const fftw_complex * get_potential_buffer() const;
