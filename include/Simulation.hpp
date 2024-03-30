@@ -26,6 +26,7 @@ public:
     ~Simulation();
 
     private:
+    void box_expansion();
     double time_max;
     double time_step;
     particle_group particle_collection;

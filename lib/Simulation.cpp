@@ -138,6 +138,14 @@ void Simulation::update_particles(){
     }
 }
 
+void Simulation::box_expansion(){
+    box_width *= expansion_factor;
+    for (uint i = 0; i < particle_collection.num_particles; i++){
+        particle_collection.particles[i].velocity[0] /= expansion_factor;
+        particle_collection.particles[i].velocity[1] /= expansion_factor;
+        particle_collection.particles[i].velocity[2] /= expansion_factor;
+    }
+}
 
 const fftw_complex* Simulation::get_density_buffer() const {
     return density_buffer;
