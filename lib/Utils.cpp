@@ -123,3 +123,23 @@ void PotentialSavetoTxt(std::vector<double> potential_vec, std::vector<double> r
     // Clean up
     outFile.close();
 }
+
+void TrajectorySavetoTxt(std::vector<double> pos_x, std::vector<double> pos_y, std::vector<double> pos_z, std::vector<double> vel_x, std::vector<double> vel_y, std::vector<double> vel_z, std::string &filename){
+
+    // Open a file in write mode
+    std::ofstream outFile(filename);
+    if (!outFile) {
+        throw std::runtime_error("Error opening file for writing.");
+    }
+
+    // Assuming all vectors are of the same length
+    size_t numElements = pos_x.size(); // or std::min({vector1.size(), vector2.size(), vector3.size()}) for safety
+
+    for (size_t i = 0; i < numElements; ++i) {
+        // Write an element from each vector to the file, separated by a space
+        outFile << pos_x[i] << " " << pos_y[i] << " " << pos_z[i] << " " << vel_x[i] << " " << vel_y[i] << " " << vel_z[i] << "\n";
+    }
+
+    // Clean up
+    outFile.close();
+}

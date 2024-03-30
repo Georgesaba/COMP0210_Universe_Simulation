@@ -29,3 +29,6 @@ vector<double> correlationFunction(vector<array<double,3>> positions, int n_bins
 
 
 void PotentialSavetoTxt(std::vector<double> potential_vec, std::vector<double> real_vec, std::string &filename);
+
+void TrajectorySavetoTxt(std::vector<double> pos_x, std::vector<double> pos_y, std::vector<double> pos_z, std::vector<double> vel_x, std::vector<double> vel_y, std::vector<double> vel_z, std::string &filename);
+

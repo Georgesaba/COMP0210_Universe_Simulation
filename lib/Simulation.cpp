@@ -43,6 +43,7 @@ void Simulation::run()
         fill_potential_buffer();
         update_particles();
         box_expansion();
+        t += time_step;
     }
 }
 

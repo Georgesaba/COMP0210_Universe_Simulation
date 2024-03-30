@@ -39,3 +39,6 @@ fftw-3.3.10/*
 
 #vscode files
 .vscode/*
+
+#test plotting
+test_potential/*

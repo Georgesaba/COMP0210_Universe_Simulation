@@ -316,7 +316,7 @@ TEST_CASE("Ensure displacement is centered around 0", "[Update_Particle]"){
     double mass = 0.1;
     double width = 1;
     uint number_particles = 2;
-    particle_group particles(mass, number_particles, {{0.35, 0.35, 0.35}, {0.65, 0.65, 0.65}});
+    particle_group particles(mass, number_particles, {{0.30, 0.30, 0.30}, {0.70, 0.70, 0.70}});
     uint num_cells = 10;
     double cell_width = width/num_cells;
     Simulation sim(10, 0.01, particles, width, num_cells, 2);
@@ -335,9 +335,6 @@ TEST_CASE("Ensure displacement is centered around 0", "[Update_Particle]"){
         sim.update_particles();
         const particle_group particle_collection = sim.get_particle_collection(); // testing particles approaching each other
         
-
-        //std::cout << particle_collection.particles[0].position[0] << " : " << particle_collection.particles[1].position[0] << std::endl;
-
         // given limited timesteps the particles must approach each other. Calculating total distance
 
         double distance_x = (particle_collection.particles[0].position[0] - particle_collection.particles[1].position[0]);
@@ -347,7 +344,6 @@ TEST_CASE("Ensure displacement is centered around 0", "[Update_Particle]"){
         distances_x.push_back(distance_x);
         distances_y.push_back(distance_y);
         distances_z.push_back(distance_z);
-        //std::cout << distance_x << std::endl;
 
         double velocity_x = (particle_collection.particles[0].velocity[0] - particle_collection.particles[1].velocity[0]);
         double velocity_y = (particle_collection.particles[0].velocity[1] - particle_collection.particles[1].velocity[1]);
@@ -356,8 +352,10 @@ TEST_CASE("Ensure displacement is centered around 0", "[Update_Particle]"){
         velocities_x.push_back(velocity_x);
         velocities_y.push_back(velocity_y);
         velocities_z.push_back(velocity_z);
-        //std::cout << velocity_x << std::endl;
     }
+    std::cout << *std::max_element(distances_x.begin(),distances_x.end()) << std::endl;
+    
+
     double mean_dist_x = std::accumulate(distances_x.begin(), distances_x.end(), 0.0)/distances_x.size();
     double mean_dist_y = std::accumulate(distances_y.begin(), distances_y.end(), 0.0)/distances_y.size();
     double mean_dist_z = std::accumulate(distances_z.begin(), distances_z.end(), 0.0)/distances_z.size();
@@ -366,12 +364,15 @@ TEST_CASE("Ensure displacement is centered around 0", "[Update_Particle]"){
     double mean_vel_y = std::accumulate(velocities_y.begin(), velocities_y.end(), 0.0)/velocities_y.size();
     double mean_vel_z = std::accumulate(velocities_z.begin(), velocities_z.end(), 0.0)/velocities_z.size();
 
-    REQUIRE_THAT(mean_dist_x, WithinAbs(0,0.1));
-    REQUIRE_THAT(mean_dist_y, WithinAbs(0,0.1));
+    REQUIRE_THAT(mean_dist_x, WithinAbs(0,0.1)); // cannot use mean as trajectories are biased towards the extremes so                                          
+    REQUIRE_THAT(mean_dist_y, WithinAbs(0,0.1)); // slight imbalance results in non zero mean. Using mid range
     REQUIRE_THAT(mean_dist_z, WithinAbs(0,0.1));
 
 
-    REQUIRE_THAT(mean_vel_x, WithinAbs(0,0.1));
-    REQUIRE_THAT(mean_vel_y, WithinAbs(0,0.1));
-    REQUIRE_THAT(mean_vel_z, WithinAbs(0,0.1));  
+    REQUIRE_THAT(mean_vel_x, WithinAbs(0,0.05));
+    REQUIRE_THAT(mean_vel_y, WithinAbs(0,0.05));
+    REQUIRE_THAT(mean_vel_z, WithinAbs(0,0.05));
+
+    // std::string filename("test_potential/trajectories.txt");
+    // TrajectorySavetoTxt(distances_x, distances_y, distances_z, velocities_x, velocities_y, velocities_z,filename); //for analysis purposes
 }
