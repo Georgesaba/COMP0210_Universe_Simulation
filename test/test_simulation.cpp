@@ -4,6 +4,7 @@
 #include "Simulation.hpp"
 #include "Utils.hpp"
 #include <iostream>
+#include <algorithm>
 
 using namespace Catch::Matchers;
 
@@ -282,4 +283,95 @@ TEST_CASE("Test gradient function for periodic f(x) = cos^2(x) + sin^2(y) + cos(
     }
     
     fftw_free(test_func_buffer);
+}
+
+TEST_CASE("Ensure two particles approach each other:","[Update_Particle]"){
+    double mass = 0.1;
+    double width = 1;
+    uint number_particles = 2;
+    particle_group particles(mass, number_particles, {{0.4, 0.4, 0.4}, {0.8, 0.8, 0.8}});
+    uint num_cells = 100;
+    double cell_width = width/num_cells;
+    Simulation sim(10, 0.1, particles, width, num_cells, 2);
+    
+    double prev_distance = std::sqrt(0.4 * 0.4 * 3);
+
+    for (uint i = 0; i < 10; i++){
+        sim.fill_density_buffer();
+        sim.fill_potential_buffer();
+        sim.update_particles();
+        const particle_group particle_collection = sim.get_particle_collection(); // testing particles approaching each other
+        
+        // given limited timesteps the particles must approach each other. Calculating total distance
+        double new_distance = std::pow((particle_collection.particles[0].position[0] - particle_collection.particles[1].position[0]), 2);
+        new_distance += std::pow((particle_collection.particles[0].position[1] - particle_collection.particles[1].position[1]), 2);
+        new_distance += std::pow((particle_collection.particles[0].position[2] - particle_collection.particles[1].position[2]), 2);
+        new_distance = std::sqrt(new_distance);
+        REQUIRE(new_distance < prev_distance);
+        prev_distance = new_distance;
+    }
+}
+
+TEST_CASE("Ensure displacement is centered around 0", "[Update_Particle]"){
+    double mass = 0.1;
+    double width = 1;
+    uint number_particles = 2;
+    particle_group particles(mass, number_particles, {{0.35, 0.35, 0.35}, {0.65, 0.65, 0.65}});
+    uint num_cells = 10;
+    double cell_width = width/num_cells;
+    Simulation sim(10, 0.01, particles, width, num_cells, 2);
+    
+    std::vector<double> distances_x = {0};
+    std::vector<double> distances_y = {0};
+    std::vector<double> distances_z = {0};
+
+    std::vector<double> velocities_x = {0};
+    std::vector<double> velocities_y = {0};
+    std::vector<double> velocities_z = {0};
+
+    for (uint i = 0; i < 200000; i++){
+        sim.fill_density_buffer();
+        sim.fill_potential_buffer();
+        sim.update_particles();
+        const particle_group particle_collection = sim.get_particle_collection(); // testing particles approaching each other
+        
+
+        //std::cout << particle_collection.particles[0].position[0] << " : " << particle_collection.particles[1].position[0] << std::endl;
+
+        // given limited timesteps the particles must approach each other. Calculating total distance
+
+        double distance_x = (particle_collection.particles[0].position[0] - particle_collection.particles[1].position[0]);
+        double distance_y = (particle_collection.particles[0].position[1] - particle_collection.particles[1].position[1]);
+        double distance_z = (particle_collection.particles[0].position[2] - particle_collection.particles[1].position[2]);
+
+        distances_x.push_back(distance_x);
+        distances_y.push_back(distance_y);
+        distances_z.push_back(distance_z);
+        //std::cout << distance_x << std::endl;
+
+        double velocity_x = (particle_collection.particles[0].velocity[0] - particle_collection.particles[1].velocity[0]);
+        double velocity_y = (particle_collection.particles[0].velocity[1] - particle_collection.particles[1].velocity[1]);
+        double velocity_z = (particle_collection.particles[0].velocity[2] - particle_collection.particles[1].velocity[2]);
+
+        velocities_x.push_back(velocity_x);
+        velocities_y.push_back(velocity_y);
+        velocities_z.push_back(velocity_z);
+        //std::cout << velocity_x << std::endl;
+    }
+    double mean_dist_x = std::accumulate(distances_x.begin(), distances_x.end(), 0.0)/distances_x.size();
+    double mean_dist_y = std::accumulate(distances_y.begin(), distances_y.end(), 0.0)/distances_y.size();
+    double mean_dist_z = std::accumulate(distances_z.begin(), distances_z.end(), 0.0)/distances_z.size();
+
+    double mean_vel_x = std::accumulate(velocities_x.begin(), velocities_x.end(), 0.0)/velocities_x.size();
+    double mean_vel_y = std::accumulate(velocities_y.begin(), velocities_y.end(), 0.0)/velocities_y.size();
+    double mean_vel_z = std::accumulate(velocities_z.begin(), velocities_z.end(), 0.0)/velocities_z.size();
+
+    REQUIRE_THAT(mean_dist_x, WithinAbs(0,0.1));
+    REQUIRE_THAT(mean_dist_y, WithinAbs(0,0.1));
+    REQUIRE_THAT(mean_dist_z, WithinAbs(0,0.1));
+
+
+    REQUIRE_THAT(mean_vel_x, WithinAbs(0,0.1));
+    REQUIRE_THAT(mean_vel_y, WithinAbs(0,0.1));
+    REQUIRE_THAT(mean_vel_z, WithinAbs(0,0.1));  
 }

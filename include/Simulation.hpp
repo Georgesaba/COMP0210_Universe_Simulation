@@ -17,9 +17,11 @@ public:
     void fill_density_buffer();
     void fill_potential_buffer();
     std::vector<std::vector<std::vector<std::array<double, 3>>>> calculate_gradient(fftw_complex * potential);
+    void update_particles();
     
     const fftw_complex * get_density_buffer() const;
     const fftw_complex * get_potential_buffer() const;
+    const particle_group & get_particle_collection() const;
 
     ~Simulation();
 

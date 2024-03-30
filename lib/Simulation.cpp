@@ -42,15 +42,15 @@ void Simulation::run()
 
 void Simulation::fill_density_buffer(){
     std::memset(density_buffer, 0, sizeof(fftw_complex) * number_of_cells * number_of_cells * number_of_cells);
-    for (uint index = 0; index < particle_collection.num_particles; index++){
-        particle& current_particle = particle_collection.particles[index];
+    for (uint particle_index = 0; particle_index < particle_collection.num_particles; particle_index++){
+        particle& current_particle = particle_collection.particles[particle_index];
         uint i = std::floor(current_particle.position[0] * number_of_cells);
         uint j = std::floor(current_particle.position[1] * number_of_cells);
         uint k = std::floor(current_particle.position[2] * number_of_cells);
         
-        uint ind = k + number_of_cells * (j + number_of_cells * i);
+        uint index = k + number_of_cells * (j + number_of_cells * i);
         double cell_width = (box_width/number_of_cells);
-        density_buffer[ind][0] += particle_collection.mass / (cell_width * cell_width * cell_width);
+        density_buffer[index][0] += particle_collection.mass / (cell_width * cell_width * cell_width);
     }
 }
 
@@ -91,12 +91,12 @@ std::vector<std::vector<std::vector<std::array<double, 3>>>> Simulation::calcula
                 int k_high = k + 1;
                 int k_low = k - 1;
 
-                if (i_high >= number_of_cells){i_high -= number_of_cells;}
-                if (i_low < 0){i_low += number_of_cells;}
-                if (j_high >= number_of_cells){j_high -= number_of_cells;}
-                if (j_low < 0){j_low += number_of_cells;}
-                if (k_high >= number_of_cells){k_high -= number_of_cells;}
-                if (k_low < 0){k_low += number_of_cells;}
+                while (i_high >= number_of_cells){i_high -= number_of_cells;}
+                while (i_low < 0){i_low += number_of_cells;}
+                while (j_high >= number_of_cells){j_high -= number_of_cells;}
+                while (j_low < 0){j_low += number_of_cells;}
+                while (k_high >= number_of_cells){k_high -= number_of_cells;}
+                while (k_low < 0){k_low += number_of_cells;}
 
                 gradient[i][j][k][0] = (potential[k + number_of_cells * (j + number_of_cells * i_high)][0] 
                 - potential[k + number_of_cells * (j + number_of_cells * i_low)][0])/(2 * cell_width);
@@ -112,6 +112,32 @@ std::vector<std::vector<std::vector<std::array<double, 3>>>> Simulation::calcula
     return gradient;
 }
 
+void Simulation::update_particles(){
+    std::vector<std::vector<std::vector<std::array<double, 3>>>> gradient = calculate_gradient(potential_buffer);
+    for (uint index = 0; index < particle_collection.num_particles; index++){
+        particle& current_particle = particle_collection.particles[index];
+        uint i = std::floor(current_particle.position[0] * number_of_cells);
+        uint j = std::floor(current_particle.position[1] * number_of_cells);
+        uint k = std::floor(current_particle.position[2] * number_of_cells);
+
+        current_particle.velocity[0] += -1 * gradient[i][j][k][0] * time_step;
+        current_particle.velocity[1] += -1 * gradient[i][j][k][1] * time_step;
+        current_particle.velocity[2] += -1 * gradient[i][j][k][2] * time_step;
+
+        current_particle.position[0] += current_particle.velocity[0] * time_step;
+        current_particle.position[1] += current_particle.velocity[1] * time_step;
+        current_particle.position[2] += current_particle.velocity[2] * time_step;
+
+        // apply boundary conditions
+        while (current_particle.position[0] < 0){current_particle.position[0] +=1;}
+        while (current_particle.position[0] >= 1){current_particle.position[0] -= 1;}
+        while (current_particle.position[1] < 0){current_particle.position[1] += 1;}
+        while (current_particle.position[1] >= 1){current_particle.position[1] -= 1;}
+        while (current_particle.position[2] < 0){current_particle.position[2] += 1;}
+        while (current_particle.position[2] >= 1){current_particle.position[2] -= 1;}
+    }
+}
+
 
 const fftw_complex* Simulation::get_density_buffer() const {
     return density_buffer;
@@ -119,4 +145,8 @@ const fftw_complex* Simulation::get_density_buffer() const {
 
 const fftw_complex* Simulation::get_potential_buffer() const{
     return potential_buffer;
+}
+
+const particle_group & Simulation::get_particle_collection() const {
+    return particle_collection;
 }
