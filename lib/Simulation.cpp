@@ -9,6 +9,24 @@ Simulation::Simulation(double t_max, double t_step, particle_group collection, d
                         time_max(t_max), time_step(t_step), particle_collection(collection), box_width(W), number_of_cells(num_cells),
                          expansion_factor(e_factor)
 {
+    if (t_max <= 0){
+        throw std::invalid_argument("Error - t_max (maximum time reached) must not be less than or equal to 0!");
+    }
+    if (t_step <= 0){
+        throw std::invalid_argument("Error - t_step (time step) must not be less than or equal to 0!");
+    }
+    if (W <= 0){
+        throw std::invalid_argument("Error - W (Box Width) must not be less than or equal to 0!");
+    }
+    if (e_factor <= 0){
+        throw std::invalid_argument("Error - e_factor (expansion factor) must be larger than 0!");
+    }
+    else if (e_factor < 1){
+        std::cerr << "Warning - e_factor is less than 1 so simulatation will represent contracting universe. This is functional however is unphysical." << std::endl;
+    }
+    if (num_cells > 1000000000){
+        std::cerr << "Warning - num_cells (Grid Length) has been set to more than 1,000,000,000 units! This may have adverse effects on performance." << std::endl;
+    }
     // allocate and instantiate density buffer
     uint buffer_length = number_of_cells * number_of_cells * number_of_cells;
     density_buffer = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * buffer_length);
