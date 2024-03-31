@@ -321,9 +321,9 @@ TEST_CASE("Ensure displacement is centered around 0", "[Update_Particle]"){
     double cell_width = width/num_cells;
     Simulation sim(10, 0.01, particles, width, num_cells, 2);
     
-    std::vector<double> distances_x = {0};
-    std::vector<double> distances_y = {0};
-    std::vector<double> distances_z = {0};
+    std::vector<double> distances_x = {0.4};
+    std::vector<double> distances_y = {0.4};
+    std::vector<double> distances_z = {0.4};
 
     std::vector<double> velocities_x = {0};
     std::vector<double> velocities_y = {0};
@@ -353,8 +353,6 @@ TEST_CASE("Ensure displacement is centered around 0", "[Update_Particle]"){
         velocities_y.push_back(velocity_y);
         velocities_z.push_back(velocity_z);
     }
-    std::cout << *std::max_element(distances_x.begin(),distances_x.end()) << std::endl;
-    
 
     double mean_dist_x = std::accumulate(distances_x.begin(), distances_x.end(), 0.0)/distances_x.size();
     double mean_dist_y = std::accumulate(distances_y.begin(), distances_y.end(), 0.0)/distances_y.size();
@@ -364,8 +362,8 @@ TEST_CASE("Ensure displacement is centered around 0", "[Update_Particle]"){
     double mean_vel_y = std::accumulate(velocities_y.begin(), velocities_y.end(), 0.0)/velocities_y.size();
     double mean_vel_z = std::accumulate(velocities_z.begin(), velocities_z.end(), 0.0)/velocities_z.size();
 
-    REQUIRE_THAT(mean_dist_x, WithinAbs(0,0.1)); // cannot use mean as trajectories are biased towards the extremes so                                          
-    REQUIRE_THAT(mean_dist_y, WithinAbs(0,0.1)); // slight imbalance results in non zero mean. Using mid range
+    REQUIRE_THAT(mean_dist_x, WithinAbs(0,0.1)); // use hypothesis that displacmement and difference of velocity between particles is 0 centered                                      
+    REQUIRE_THAT(mean_dist_y, WithinAbs(0,0.1)); 
     REQUIRE_THAT(mean_dist_z, WithinAbs(0,0.1));
 
 
@@ -375,4 +373,40 @@ TEST_CASE("Ensure displacement is centered around 0", "[Update_Particle]"){
 
     // std::string filename("test_potential/trajectories.txt");
     // TrajectorySavetoTxt(distances_x, distances_y, distances_z, velocities_x, velocities_y, velocities_z,filename); //for analysis purposes
+}
+
+TEST_CASE("Ensure particles remain stationary when distance between them through boundaries and directly is the same","[Update_Particle]"){
+    double mass = 0.1;
+    double width = 1;
+    uint number_particles = 2;
+    particle_group particles(mass, number_particles, {{0.25, 0.25, 0.25}, {0.75, 0.75, 0.75}});
+    uint num_cells = 10;
+    double cell_width = width/num_cells;
+    Simulation sim(10, 0.01, particles, width, num_cells, 2);
+    
+
+
+    for (uint i = 0; i < 2000; i++){
+        sim.fill_density_buffer();
+        sim.fill_potential_buffer();
+        sim.update_particles();
+        const particle_group particle_collection = sim.get_particle_collection(); 
+        
+        // particles must remain stationary as gravitational force in either direction is the same. Total field at particle coordinates is uniform
+
+        REQUIRE_THAT(particle_collection.particles[0].position[0], WithinRel(0.25,1e-6));
+        REQUIRE_THAT(particle_collection.particles[0].position[1], WithinRel(0.25,1e-6));
+        REQUIRE_THAT(particle_collection.particles[0].position[2], WithinRel(0.25,1e-6));
+        REQUIRE_THAT(particle_collection.particles[1].position[0], WithinRel(0.75,1e-6));
+        REQUIRE_THAT(particle_collection.particles[1].position[1], WithinRel(0.75,1e-6));
+        REQUIRE_THAT(particle_collection.particles[1].position[2], WithinRel(0.75,1e-6));
+        
+        REQUIRE_THAT(particle_collection.particles[0].velocity[0], WithinAbs(0,1e-6));
+        REQUIRE_THAT(particle_collection.particles[0].velocity[1], WithinAbs(0,1e-6));
+        REQUIRE_THAT(particle_collection.particles[0].velocity[2], WithinAbs(0,1e-6));
+        REQUIRE_THAT(particle_collection.particles[1].velocity[0], WithinAbs(0,1e-6));
+        REQUIRE_THAT(particle_collection.particles[1].velocity[1], WithinAbs(0,1e-6));
+        REQUIRE_THAT(particle_collection.particles[1].velocity[2], WithinAbs(0,1e-6));
+    }
+
 }
