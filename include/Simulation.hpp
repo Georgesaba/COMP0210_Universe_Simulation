@@ -17,17 +17,17 @@ public:
 
     void fill_density_buffer();
     void fill_potential_buffer();
-    std::vector<std::vector<std::vector<std::array<double, 3>>>> calculate_gradient(fftw_complex * potential);
+    std::vector<std::vector<std::vector<std::array<double, 3>>>> calculate_gradient(const fftw_complex * potential);
     void update_particles();
     
     const fftw_complex * get_density_buffer() const;
     const fftw_complex * get_potential_buffer() const;
     const particle_group & get_particle_collection() const;
+    void box_expansion();
 
     ~Simulation();
 
     private:
-    void box_expansion();
     double time_max;
     double time_step;
     particle_group particle_collection;

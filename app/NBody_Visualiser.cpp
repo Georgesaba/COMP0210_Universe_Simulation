@@ -72,7 +72,7 @@ int main(int argc, char** argv)
                 return 1;
             }
             std::string arg1(argv[i+1]);
-            average_particles_per_cell = std::stod(arg1.c_str());
+            average_particles_per_cell = std::stod(arg1.c_str()); // double so more flexibility is possible. Performance impact is negligible
             average_particle_per_cell_set = true;
             
         } 

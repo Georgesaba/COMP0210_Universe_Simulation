@@ -4,6 +4,7 @@
 #include <cstring>
 #include <cmath>
 #include <iostream>
+#include <omp.h>
 #include <filesystem>
 
 Simulation::Simulation(double t_max, double t_step, particle_group collection, double W, uint num_cells, double e_factor) : 
@@ -86,6 +87,8 @@ void Simulation::run(std::optional<std::string> output_folder)
 
 void Simulation::fill_density_buffer(){
     std::memset(density_buffer, 0, sizeof(fftw_complex) * number_of_cells * number_of_cells * number_of_cells);
+    
+    #pragma omp parallel for
     for (uint particle_index = 0; particle_index < particle_collection.num_particles; particle_index++){
         particle& current_particle = particle_collection.particles[particle_index];
         uint i = std::floor(current_particle.position[0] * number_of_cells);
@@ -94,6 +97,9 @@ void Simulation::fill_density_buffer(){
         
         uint index = k + number_of_cells * (j + number_of_cells * i);
         double cell_width = (box_width/number_of_cells);
+
+        // use of atomic to prevent race condition when updating density buffer
+        #pragma omp atomic
         density_buffer[index][0] += particle_collection.mass / (cell_width * cell_width * cell_width);
     }
 }
@@ -104,6 +110,7 @@ void Simulation::fill_potential_buffer(){
     k_space_buffer[0][0] = 0; //set first element of the buffer to 0.
     k_space_buffer[0][1] = 0;
     
+    #pragma omp parallel for //parallelise
     for (uint index = 1; index < total_size; index++){
         uint i = index / (number_of_cells * number_of_cells);
         uint j = (index / number_of_cells) % number_of_cells;
@@ -119,12 +126,13 @@ void Simulation::fill_potential_buffer(){
     fftw_execute(backward_plan);
 }
 
-std::vector<std::vector<std::vector<std::array<double, 3>>>> Simulation::calculate_gradient(fftw_complex * potential){
+std::vector<std::vector<std::vector<std::array<double, 3>>>> Simulation::calculate_gradient(const fftw_complex * potential){
     double cell_width = box_width/number_of_cells;
 
     std::vector<std::vector<std::vector<std::array<double, 3>>>> gradient(number_of_cells, std::vector<std::vector<std::array<double, 3>>>(
         number_of_cells, std::vector<std::array<double, 3>>(number_of_cells, std::array<double, 3>{0, 0, 0}))); // Initialize each std::array<double, 3> with zeros
     
+    #pragma omp parallel for collapse(3) // Parallelize all nested loops
     for (int i = 0; i < number_of_cells; i++){
         for (int j = 0; j < number_of_cells; j++){
             for (int k = 0; k < number_of_cells; k++){
@@ -158,6 +166,8 @@ std::vector<std::vector<std::vector<std::array<double, 3>>>> Simulation::calcula
 
 void Simulation::update_particles(){
     std::vector<std::vector<std::vector<std::array<double, 3>>>> gradient = calculate_gradient(potential_buffer);
+    
+    #pragma omp parallel for
     for (uint index = 0; index < particle_collection.num_particles; index++){
         particle& current_particle = particle_collection.particles[index];
         uint i = std::floor(current_particle.position[0] * number_of_cells);
@@ -184,6 +194,8 @@ void Simulation::update_particles(){
 
 void Simulation::box_expansion(){
     box_width *= expansion_factor;
+
+    #pragma omp parallel for
     for (uint i = 0; i < particle_collection.num_particles; i++){
         particle_collection.particles[i].velocity[0] /= expansion_factor;
         particle_collection.particles[i].velocity[1] /= expansion_factor;
