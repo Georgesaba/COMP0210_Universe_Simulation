@@ -8,6 +8,32 @@
 
 using namespace Catch::Matchers;
 
+TEST_CASE("Test Simulation constructor for error handling with invalid arguments", "[Simulation_Constructor]"){
+    double mass = 0.01;
+    double width = 1;
+    uint number_particles = 0;
+    particle_group particles(mass, number_particles, {});
+    uint num_cells = 100;
+    double cell_width = width/num_cells;
+    REQUIRE_THROWS(Simulation(-1, 0.1, particles, width, num_cells, 2));
+    REQUIRE_THROWS(Simulation(1, -0.1, particles, width, num_cells, 2));
+    REQUIRE_THROWS(Simulation(1, 0.1, particles, width, num_cells,-2));
+    REQUIRE_THROWS(Simulation(1, 0.1, particles, width,-1 * num_cells,2));
+    REQUIRE_THROWS(Simulation(1, 0.1, particles, -1 * width, num_cells,2));
+}
+
+TEST_CASE("Test particle constructor for error handling with invalid arguments", "[particle_constructor]"){
+    REQUIRE_THROWS(particle({-1,-1,-1}));
+    REQUIRE_THROWS(particle({2,2,2}));
+}
+
+TEST_CASE("Test particle group constructor for error handling with invalid arguments","[particle_constructor]"){
+    uint number_particles = 0;
+    REQUIRE_THROWS(particle_group(-1, number_particles, {}));
+    REQUIRE_THROWS(particle_group(1, number_particles, {{1,1,1}}));
+}
+
+
 TEST_CASE("Test density calculation function for no particles","[Density_Calc]"){
     double mass = 0.01;
     double width = 1;

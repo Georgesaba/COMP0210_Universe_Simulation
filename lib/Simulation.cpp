@@ -25,6 +25,9 @@ Simulation::Simulation(double t_max, double t_step, particle_group collection, d
     else if (e_factor < 1){
         std::cerr << "Warning - e_factor is less than 1 so simulatation will represent contracting universe. This is functional however is unphysical." << std::endl;
     }
+    if (num_cells > std::numeric_limits<int>::max()){
+        throw std::overflow_error("Error - The number of cells stated is invalid.");
+    }
     if (num_cells > 1000000000){
         std::cerr << "Warning - num_cells (Grid Length) has been set to more than 1,000,000,000 units! This may have adverse effects on performance." << std::endl;
     }
