@@ -2,6 +2,7 @@
 #include "particle.hpp"
 #include <fftw3.h>
 #include <vector>
+#include <optional>
 
 class Simulation
 {
@@ -12,7 +13,7 @@ public:
      * @brief Run a particle mesh simulation from t=0 to t_max
      * 
      */
-    void run();
+    void run(std::optional<std::string> output_folder = std::nullopt);
 
     void fill_density_buffer();
     void fill_potential_buffer();

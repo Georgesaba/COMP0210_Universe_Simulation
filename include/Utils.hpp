@@ -5,6 +5,7 @@
 #include <string>
 #include <fftw3.h>
 #include <random>
+#include <optional>
 
 using std::vector;
 using std::array;
@@ -32,3 +33,11 @@ void PotentialSavetoTxt(std::vector<double> potential_vec, std::vector<double> r
 
 void TrajectorySavetoTxt(std::vector<double> pos_x, std::vector<double> pos_y, std::vector<double> pos_z, std::vector<double> vel_x, std::vector<double> vel_y, std::vector<double> vel_z, std::string &filename);
 
+
+/**
+ * @brief: Removes trailing zeros in values starting from the most amount of decimal places. Cuts off values from the first zero to the right.
+ * @returns: Formatted string with trailing zeros cut off from the right.
+*/
+std::string findsigfig(double number);
+std::string formatREALToNDecimalPlaces(double value, uint dp = 3);
+std::string removeTrailingDecimalPlaces(double value, uint max_dp = 3);

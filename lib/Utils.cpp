@@ -7,6 +7,7 @@
 #include <numeric>
 #include <fstream>
 #include <fftw3.h>
+#include <iomanip>
 
 using std::fstream;
 using std::vector;
@@ -142,4 +143,50 @@ void TrajectorySavetoTxt(std::vector<double> pos_x, std::vector<double> pos_y, s
 
     // Clean up
     outFile.close();
+}
+
+
+std::string findsigfig(double number){
+    uint idx = 0;
+    std::string result = "";
+    std::string num_as_string = std::to_string(number);
+    for (uint i = num_as_string.size() - 1; i > 0; i--){
+        if (num_as_string[i] != '0'){
+            idx = i;
+            break;
+        }
+    }
+    for (uint i = 0; i < num_as_string.size(); i++){
+        result += num_as_string[i];
+        if (i == idx){
+            break;
+        }
+    }
+    return result;
+}
+
+std::string formatREALToNDecimalPlaces(double value, uint dp) {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(dp) << value;
+    return oss.str();
+}
+
+/**
+ * @brief: Rounds value to decimal place if value is the same as if it was rounded to one more decimal place. e.g. 2.50003 is rounded to 2.5. 2.05 is rounded to 2. 2.34340 is 2.3434. Therefore cuts off values from the first zero to the left.
+ * @returns Formatted string with trailing zeros cut off from the left.
+*/
+std::string removeTrailingDecimalPlaces(double value, uint max_dp){
+    std::optional<uint> idx;
+    for (uint i = 0; i < max_dp - 1; i++){
+        double rd1 =  std::stod(formatREALToNDecimalPlaces(value,i)); // converting to double for validation purpose
+        double rd2 = std::stod(formatREALToNDecimalPlaces(value,i + 1));
+        if (rd1 == rd2){
+            idx.emplace(i);
+            break;
+        }
+    }
+    if (!(idx)){
+        idx.emplace(max_dp - 1);
+    }
+    return formatREALToNDecimalPlaces(value,idx.value());
 }

@@ -42,3 +42,6 @@ fftw-3.3.10/*
 
 #test plotting
 test_potential/*
+
+#images
+Images/*

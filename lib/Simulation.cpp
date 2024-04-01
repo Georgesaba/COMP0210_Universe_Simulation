@@ -4,6 +4,7 @@
 #include <cstring>
 #include <cmath>
 #include <iostream>
+#include <filesystem>
 
 Simulation::Simulation(double t_max, double t_step, particle_group collection, double W, uint num_cells, double e_factor) : 
                         time_max(t_max), time_step(t_step), particle_collection(collection), box_width(W), number_of_cells(num_cells),
@@ -53,15 +54,30 @@ Simulation::~Simulation(){
     fftw_destroy_plan(backward_plan);
 }
 
-void Simulation::run()
+void Simulation::run(std::optional<std::string> output_folder)
 {
-    uint t = 0;
+    std::string ppc = findsigfig(static_cast<double>(particle_collection.num_particles)/static_cast<double>(number_of_cells * number_of_cells * number_of_cells));
+    
+    double t = 0.0;
+    uint counter = 0;
     while (t < time_max){
         fill_density_buffer();
         fill_potential_buffer();
         update_particles();
         box_expansion();
         t += time_step;
+        
+        if (output_folder){
+            counter++;
+            if (counter >= 10){
+                counter = 0;
+                std::string partial_path = *output_folder + "/" + findsigfig(expansion_factor) + "/";
+                std::filesystem::create_directories(partial_path);
+                std::string full_path = partial_path + "UniverseSim_dt_" + findsigfig(time_step) + "_time_" + 
+                findsigfig(t) + "_num_cells_" + std::to_string(number_of_cells) + "_ppc_" + ppc + ".pbm";
+                SaveToFile(density_buffer, number_of_cells, full_path);
+            }
+        }
     }
 }
 
