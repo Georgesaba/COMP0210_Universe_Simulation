@@ -118,10 +118,17 @@ int main(int argc, char** argv)
         }
         else{ // extra error handling
             std::cerr << "Invalid Flag Detected: " << arg << std::endl;
+            HelpMessage();
             return 1;
         }
     }
     
+    if (!(output_folder_set && num_cells_set && average_particle_per_cell_set && time_step_set && expansion_factor_set && random_seed_set && max_time_set)){
+        std::cerr << "Please Input the Required Flags!" << std::endl;
+        HelpMessage();
+        return 1;
+    }
+
     double width = 100.0;
     uint num_particles = num_cells * num_cells * num_cells * average_particles_per_cell;
     double mass = 10.0 * 10.0 * 10.0 * 10.0 * 10.0/num_particles;
