@@ -1,4 +1,5 @@
 #include "Utils.hpp"
+#include "particle.hpp"
 #include <vector>
 #include <array>
 #include <stdexcept>
@@ -64,7 +65,7 @@ void SaveToFile(fftw_complex* density_map, const size_t n_cells, const string &f
     }
 }
 
-vector<double> correlationFunction(vector<array<double,3>> positions, int n_bins)
+vector<double> correlationFunction(particle_group particles, int n_bins)
 {
     if(n_bins <= 0)
     {
@@ -81,15 +82,15 @@ vector<double> correlationFunction(vector<array<double,3>> positions, int n_bins
     };
     
     // Only take a limited sample of positions if there are too many 
-    int N = std::min(1000, int(positions.size()));
+    int N = std::min(1000, int(particles.num_particles));
     for (int i = 0; i < N; i += 1)
     {
         for (int j = i; j < N; j += 1)
         {
 
-            double dx = shortestDistance(positions[i][0], positions[j][0]);
-            double dy = shortestDistance(positions[i][1], positions[j][1]);
-            double dz = shortestDistance(positions[i][2], positions[j][2]);
+            double dx = shortestDistance(particles.particles[i].position[0], particles.particles[j].position[0]);
+            double dy = shortestDistance(particles.particles[i].position[1], particles.particles[j].position[1]);
+            double dz = shortestDistance(particles.particles[i].position[2], particles.particles[j].position[2]);
             double r = std::sqrt(dx * dx + dy * dy + dz * dz);
             if(r < 0.5)  // within the 0.5 radius sphere to avoid edge effects from cube
             {
@@ -105,7 +106,48 @@ vector<double> correlationFunction(vector<array<double,3>> positions, int n_bins
     return CR;
 }
 
-void PotentialSavetoTxt(std::vector<double> potential_vec, std::vector<double> real_vec, std::string &filename){
+void Save_Correlations_csv(const std::vector<std::vector<double>>& data, const std::vector<std::string>& columnLabels, const std::string& filename){
+    std::ofstream file(filename);
+
+    // Check if the file is open
+    if (!file.is_open()) {
+        throw std::runtime_error("Failed to open the file.");
+        return;
+    }
+
+    // Output column labels
+    for (size_t i = 0; i < columnLabels.size(); ++i) {
+        file << columnLabels[i];
+        if (i < columnLabels.size() - 1) file << ",";
+    }
+    file << "\n";
+
+    size_t numRows = data[0].size();
+
+    // Iterate over each row
+    for (size_t row = 0; row < numRows; ++row) {
+        // Iterate over each column in the row
+        for (size_t col = 0; col < data.size(); ++col) {
+            // Check if the current column has enough rows; if not, output an empty string
+            if (row < data[col].size()) {
+                file << data[col][row];
+            } else {
+                file << "";
+            }
+
+            // If not the last column, add a comma separator
+            if (col < data.size() - 1) file << ",";
+        }
+        // End of the row
+        file << "\n";
+    }
+
+    file.close();
+}
+
+
+
+void PotentialSavetoTxt(std::vector<double>& potential_vec, std::vector<double>& real_vec, std::string &filename){
 
     // Open a file in write mode
     std::ofstream outFile(filename);
@@ -125,7 +167,7 @@ void PotentialSavetoTxt(std::vector<double> potential_vec, std::vector<double> r
     outFile.close();
 }
 
-void TrajectorySavetoTxt(std::vector<double> pos_x, std::vector<double> pos_y, std::vector<double> pos_z, std::vector<double> vel_x, std::vector<double> vel_y, std::vector<double> vel_z, std::string &filename){
+void TrajectorySavetoTxt(std::vector<double>& pos_x, std::vector<double>& pos_y, std::vector<double>& pos_z, std::vector<double>& vel_x, std::vector<double>& vel_y, std::vector<double>& vel_z, std::string &filename){
 
     // Open a file in write mode
     std::ofstream outFile(filename);

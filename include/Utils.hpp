@@ -6,6 +6,7 @@
 #include <fftw3.h>
 #include <random>
 #include <optional>
+#include "particle.hpp"
 
 using std::vector;
 using std::array;
@@ -26,12 +27,13 @@ void SaveToFile(fftw_complex* density_map, const size_t n_cells, const std::stri
  * @param n_bins the resolution of the histogram
  * @return vector<double> log of radial correlation function evenly spaced from r = 0 to 0.5
  */
-vector<double> correlationFunction(vector<array<double,3>> positions, int n_bins);
+vector<double> correlationFunction(particle_group particles, int n_bins);
 
+void Save_Correlations_csv(const std::vector<std::vector<double>>& data, const std::vector<std::string>& columnLabels, const std::string& filename);
 
-void PotentialSavetoTxt(std::vector<double> potential_vec, std::vector<double> real_vec, std::string &filename);
+void PotentialSavetoTxt(std::vector<double>& potential_vec, std::vector<double>& real_vec, std::string &filename);
 
-void TrajectorySavetoTxt(std::vector<double> pos_x, std::vector<double> pos_y, std::vector<double> pos_z, std::vector<double> vel_x, std::vector<double> vel_y, std::vector<double> vel_z, std::string &filename);
+void TrajectorySavetoTxt(std::vector<double>& pos_x, std::vector<double>& pos_y, std::vector<double>& pos_z, std::vector<double>& vel_x, std::vector<double>& vel_y, std::vector<double>& vel_z, std::string &filename);
 
 
 /**
