@@ -75,7 +75,7 @@ void Simulation::run(std::optional<std::string> output_folder)
             counter++;
             if (counter >= 10){
                 counter = 0;
-                std::string partial_path = *output_folder + "/" + findsigfig(expansion_factor) + "/";
+                std::string partial_path = *output_folder + "/" + findsigfig(expansion_factor) + "/"; // directories to be stored
                 std::filesystem::create_directories(partial_path);
                 std::string full_path = partial_path + "UniverseSim_dt_" + findsigfig(time_step) + "_time_" + 
                 findsigfig(t) + "_num_cells_" + std::to_string(number_of_cells) + "_ppc_" + ppc + ".pbm";
@@ -97,10 +97,10 @@ void Simulation::fill_density_buffer(){
         
         uint index = k + number_of_cells * (j + number_of_cells * i);
         double cell_width = (box_width/number_of_cells);
-
+        double single_density = particle_collection.mass / (cell_width * cell_width * cell_width);
         // use of atomic to prevent race condition when updating density buffer
         #pragma omp atomic
-        density_buffer[index][0] += particle_collection.mass / (cell_width * cell_width * cell_width);
+        density_buffer[index][0] += single_density;
     }
 }
 
