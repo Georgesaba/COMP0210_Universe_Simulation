@@ -1003,3 +1003,17 @@ Info: The number of cells per length of the box is 201 and the number of particl
 Benchmarking Expansion Calculation with 16 threads.
 Time = 0.157658
 Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+## Section 2.2: Comparing Universes with Distributed Memory
+
+#### Changes to CorrelationFunction()
+
+I have changed the function CorrelationFunction() in Utils.hpp/cpp to take in a particle_group object instead of a vector of positions. This is to remove the need for an extra loop that loops through all the particles to extract their positons and place them in an `std::vector<std::array<std::double>>` object. The Simulation had the hard coded parameters `num_cells = 101`; `average_particles_per_cell = 13`; `width = 100`; `random_seed = 42`; `t_max = 1.5` and `dt = 0.01`. The total mass remains $10^5$. 4 simulations and 101 bins were used for the correlation function.
+
+When running the application I used three sets of command line arguments:
+
+`minimum_expansion_factor = 1; maximum_expansion_factor = 1.05`<br>
+`minimum_expansion_factor = 1; maximum_expansion_factor = 1.04`<br>
+`minimum_expansion_factor = 1.02; maximum_expansion_factor = 1.04`<br>
+`minimum_expansion_factor = 1.03; maximum_expansion_factor = 1.04`<br>
+
