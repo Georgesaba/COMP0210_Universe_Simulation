@@ -30,16 +30,155 @@ In order to achieve a smooth density function the number of particles must alway
 
 ## Section 1.11: Running Simulation
 
-File storage format is `Images/seed_num/expansion_factor` with the other parameters included in the labelling. 4 different expansion factors were used. 0.98, 1, 1.02 and 1.1. A dt value of 0.01 with a max time of 1.5 was used and the average particles per cell value that was used was 12. The fixed random seed was always 42. The number of cells wide the box was is 101 although 201 was also tested for more granular results.
+File storage format is `Images/seed_num/expansion_factor` with the other parameters included in the labelling. 4 different expansion factors were used. 0.98, 1, 1.02 and 1.1. A dt value of 0.01 with a max time of 1.5 was used and the average particles per cell value that was used was 12. The fixed random seed was always 42. The number of cells wide the box was is 101 although 201 was also tested for more granular results. It can be seen that a lower expansion factor results in more rapid clustering of particles and a higher expansion factor results in slower clustering or none at all when too high. This can be seen by a factor of 1.1 causing the box to maintain a uniform density of particles.
 
 ## Section 2.1: Identifying Simulation functions for Parallelisation
 
-In the Simulation class the member functions fill_density_buffer(), fill_potential_buffer(), calculate_gradient(fftw_complex * potential), update_particles() and box_expansion() can all be parallelised as the results of operations in the loop do not depend on other processes. The `#pragma omp atomic` was required in the fill_density_buffer as the particles were being handled by separate threads although the density array that was being incremented had each index corresponding to a cell in the cube grid which meant that this could have caused a data race. The atomic command was used to keep the process atomic and prevent this.
+In the Simulation class the member functions fill_density_buffer(), fill_potential_buffer(), calculate_gradient(fftw_complex * potential), update_particles() and box_expansion() can all be parallelised as the results of operations in the loop do not depend on other processes. The `#pragma omp atomic` was required in the fill_density_buffer as the particles were being handled by separate threads although the density array that was being incremented had each index corresponding to a cell in the cube grid which meant that this could have caused a data race. The atomic command was used to keep the process atomic and prevent this. This was used instead of the `#pragma omp critical` command as `critical` is more generalisable making it incur higher overhead in optimisation reducing efficiency. For testing slightly different parallelisation approaches I will only use up to 4 threads as 
 
 #### Function Timings
+##### Runs with suboptimal OpenMP implementations
+
+###### Removing collapse from gradient calculation run
+
+It can be seen below that the gradient calculation is slower once the collapse statement has been removed.
+```
+Benchmarking Gradient Calc with 1 threads.
+Time = 0.232182
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Gradient Calc with 2 threads.
+Time = 0.0693008
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Gradient Calc with 3 threads.
+Time = 0.0623754
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Gradient Calc with 4 threads.
+Time = 0.0665217
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Gradient Calc with 5 threads.
+Time = 0.057237
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Gradient Calc with 6 threads.
+Time = 0.0662819
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Gradient Calc with 7 threads.
+Time = 0.0694942
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Gradient Calc with 8 threads.
+Time = 0.0640151
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Gradient Calc with 9 threads.
+Time = 0.0674306
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Gradient Calc with 10 threads.
+Time = 0.0739371
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Gradient Calc with 11 threads.
+Time = 0.0709907
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Gradient Calc with 12 threads.
+Time = 0.0644198
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Gradient Calc with 13 threads.
+Time = 0.0621819
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Gradient Calc with 14 threads.
+Time = 0.0725737
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Gradient Calc with 15 threads.
+Time = 0.0670186
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Gradient Calc with 16 threads.
+Time = 0.068514
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+```
+###### Replacing atomic with critical for density calc
+
+```
+Benchmarking Density Calculation with 1 threads.
+Time = 4.96658
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Density Calculation with 2 threads.
+Time = 5.9654
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Density Calculation with 3 threads.
+Time = 11.781
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Density Calculation with 4 threads.
+Time = 12.3546
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Density Calculation with 5 threads.
+Time = 13.6645
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Density Calculation with 6 threads.
+Time = 14.231
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Density Calculation with 7 threads.
+Time = 14.0953
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Density Calculation with 8 threads.
+Time = 14.7204
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Density Calculation with 9 threads.
+Time = 16.4325
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Density Calculation with 10 threads.
+Time = 16.0544
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Density Calculation with 11 threads.
+Time = 17.6156
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Density Calculation with 12 threads.
+Time = 17.9327
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Density Calculation with 13 threads.
+Time = 18.5819
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Density Calculation with 14 threads.
+Time = 19.0273
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Density Calculation with 15 threads.
+Time = 19.0907
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+
+Benchmarking Density Calculation with 16 threads.
+Time = 20.0847
+Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+```
+
+It can be seen above that the extra overhead incurred by critical incurs a substantial runtime increase to the program increasing run time the more threads are added.
 
 ##### Run 1
-
+```
 Benchmarking Density Calculation with 1 threads.
 Time = 0.407183
 Info: The number of cells per length of the box is 101 and the number of particles is 12363612.
@@ -359,9 +498,10 @@ Info: The number of cells per length of the box is 101 and the number of particl
 Benchmarking Expansion Calculation with 16 threads.
 Time = 0.0241153
 Info: The number of cells per length of the box is 101 and the number of particles is 12363612.
-
+```
 ##### Run 2
 
+```
 Benchmarking Density Calculation with 1 threads.
 Time = 1.72939
 Info: The number of cells per length of the box is 151 and the number of particles is 41315412.
@@ -681,9 +821,9 @@ Info: The number of cells per length of the box is 151 and the number of particl
 Benchmarking Expansion Calculation with 16 threads.
 Time = 0.0798672
 Info: The number of cells per length of the box is 151 and the number of particles is 41315412.
-
+```
 ##### Run 3
-
+```
 Benchmarking Density Calculation with 1 threads.
 Time = 7.1269
 Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
@@ -1003,6 +1143,10 @@ Info: The number of cells per length of the box is 201 and the number of particl
 Benchmarking Expansion Calculation with 16 threads.
 Time = 0.157658
 Info: The number of cells per length of the box is 201 and the number of particles is 81206010.
+```
+### Conclusion
+
+I will now analyse the benefit of multi threaded runs for each of the different functions. For the density function performance improvements are seen up till the use of roughly 11 threads. This is because my CPU has 8 cores and 16 threads which means that there are less clear performance enhancements past 8 threads that are used. There is also additional performance overhead that is incurred through the use of parallelisation which begins to dampen the performance improvements to multi threaded parallelisation the more threads that are used. This is because the work load is segmented into small enough parts that splitting it up more offers little benefit. The potential buffer calculation buffer gains most of its time complexity from the fast fourier transforms that occur which act as a bottleneck. Therefore the at 3 threads and above not much improvement is seen if and if anything run time starts to increase as more threads are used due to increased overhead. For the gradient calculation past 4 threads the performance boost provided by parallelisation plateaus. This could be due to a large portion of the runtime being taken over by initialising the gradient vector that stores the three dimensional acceleration vector for every cell. As the particle update function is merged with the calculate gradient function they were benchmarked together. Substantial performance improvements stop after 10 threads but the optimal run time is seen at 16 threads. This means that although the gradient calc function did not increase in efficiency substantially once more than 4 cores were used the performance enhancement that the particle update function had from parallelisation was significant. The expansion calculation only benefitted from the use of two threads due to how simple it is making it not worth the extra overhead.
 
 ## Section 2.2: Comparing Universes with Distributed Memory
 
@@ -1010,6 +1154,7 @@ Info: The number of cells per length of the box is 201 and the number of particl
 
 I have changed the function CorrelationFunction() in Utils.hpp/cpp to take in a particle_group object instead of a vector of positions. This is to remove the need for an extra loop that loops through all the particles to extract their positons and place them in an `std::vector<std::array<std::double>>` object. The Simulation had the hard coded parameters `num_cells = 101`; `average_particles_per_cell = 13`; `width = 100`; `random_seed = 42`; `t_max = 1.5` and `dt = 0.01`. The total mass remains $10^5$. 4 simulations and 101 bins were used for the correlation function.
 
+#### Report of Simulation Runs
 When running the application I used three sets of command line arguments:
 
 `minimum_expansion_factor = 1; maximum_expansion_factor = 1.05`<br>
@@ -1017,3 +1162,8 @@ When running the application I used three sets of command line arguments:
 `minimum_expansion_factor = 1.02; maximum_expansion_factor = 1.04`<br>
 `minimum_expansion_factor = 1.03; maximum_expansion_factor = 1.04`<br>
 
+The resultant correlation data and plots can be found in the `Correlation/` folder that is at the same level as this `Responses.md` file. The file naming convention is `Comparison_<number_of_simulations>_<min_expansion_factor>_<max_expansion_factor>.<png_or_csv>` with the extension corresponding to whether we are looking at the data or plots.
+
+### Conclusion
+
+It can be seen that for the radial correlations at lower expansion factors closer to 1 the bins that represent smaller radial correlations have a higher probability density with it decreasing as the radius expands to 0.5. As the expansion factors increase the radial correlation at lower radii have relatively lower probability densities until all the bins have equal probability densities when the expansion factor gets high enough around 1.05. The same random spike exists for all the correlations as the particles positons are deterministic and are all generated from the same seed.

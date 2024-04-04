@@ -99,6 +99,7 @@ void Simulation::fill_density_buffer(){
         double cell_width = (box_width/number_of_cells);
         double single_density = particle_collection.mass / (cell_width * cell_width * cell_width);
         // use of atomic to prevent race condition when updating density buffer
+        //#pragma omp critical
         #pragma omp atomic
         density_buffer[index][0] += single_density;
     }
@@ -132,6 +133,7 @@ std::vector<std::vector<std::vector<std::array<double, 3>>>> Simulation::calcula
     std::vector<std::vector<std::vector<std::array<double, 3>>>> gradient(number_of_cells, std::vector<std::vector<std::array<double, 3>>>(
         number_of_cells, std::vector<std::array<double, 3>>(number_of_cells, std::array<double, 3>{0, 0, 0}))); // Initialize each std::array<double, 3> with zeros
     
+    //#pragma omp parallel for
     #pragma omp parallel for collapse(3) // Parallelize all nested loops
     for (int i = 0; i < number_of_cells; i++){
         for (int j = 0; j < number_of_cells; j++){
