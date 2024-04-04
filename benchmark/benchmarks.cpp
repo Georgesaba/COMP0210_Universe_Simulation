@@ -41,6 +41,8 @@ int main()
 {
     uint average_particles_per_cell = 10;
     uint num_cells = 201;
+    // uint num_cells = 51;
+    // uint num_cells = 101;
     uint num_particles = num_cells * num_cells * num_cells * average_particles_per_cell;
     double mass = 10.0 * 10.0 * 10.0 * 10.0 * 10.0/num_particles;
     particle_group particles(mass, num_particles, 42); // initialising particle group as is passed by value to the constructor
