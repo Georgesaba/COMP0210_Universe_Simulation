@@ -11,30 +11,64 @@ int main(int argc, char** argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &process_id);
     MPI_Comm_size(MPI_COMM_WORLD, &num_proc);
     uint num_bins = 101;
+    
     if (process_id == 0){
+        if (argc < 7) { // Checks if the minimum required arguments are provided
+            std::cerr << "Usage: mpirun -np <num_processes> " << argv[0] << " -o <output_folder> -emin <min_expansion_factor> -emax <max_expansion_factor>" << std::endl;
+            MPI_Abort(MPI_COMM_WORLD, 1);
+            return 1;
+        }
+
         std::string output_folder;
-        double minimum_expansion_factor;
-        double maximum_expansion_factor;
-        
+        double minimum_expansion_factor = 0.0;
+        double maximum_expansion_factor = 0.0;
+        bool emin_set = false, emax_set = false;
+
         for (uint i = 1; i < argc; i+=2){
             std::string arg(argv[i]);
             if (arg == "-o"){
                 output_folder = argv[i+1];
             }
             else if (arg == "-emin"){
-                std::string arg1(argv[i+1]);
-                minimum_expansion_factor = std::stod(arg1.c_str());
+                try {
+                    std::string arg1(argv[i+1]);
+                    minimum_expansion_factor = std::stod(arg1);
+                    emin_set = true;
+                } catch (const std::invalid_argument& ia) {
+                    std::cerr << "Invalid argument for minimum expansion factor: " << argv[i+1] << std::endl;
+                    MPI_Abort(MPI_COMM_WORLD, 1);
+                }
             }
             else if (arg == "-emax"){
-                std::string arg1(argv[i+1]);
-                maximum_expansion_factor = std::stod(arg1.c_str());
+                try {
+                    std::string arg1(argv[i+1]);
+                    maximum_expansion_factor = std::stod(arg1);
+                    emax_set = true;
+                } catch (const std::invalid_argument& ia) {
+                    std::cerr << "Invalid argument for maximum expansion factor: " << argv[i+1] << std::endl;
+                    MPI_Abort(MPI_COMM_WORLD, 1);
+                }
             }
-            else{ // extra error handling
-                std::string arg1(arg);
-                //fprintf(stderr,"%s\n","Invalid Flag Detected: " + arg1);
-                MPI_Abort(MPI_COMM_WORLD, 0);
+            else { // extra error handling
+                std::cerr << "Invalid Flag Detected: " << arg << std::endl;
+                MPI_Abort(MPI_COMM_WORLD, 1);
             }
         }
+
+        // Additional error handling to check if minimum and maximum values have been set and if the minimum expansion factor is less than the maximum
+        if (!emin_set || !emax_set) {
+            std::cerr << "Both minimum and maximum expansion factors are required." << std::endl;
+            MPI_Abort(MPI_COMM_WORLD, 1);
+        }
+        
+        
+        if (minimum_expansion_factor >= maximum_expansion_factor) {
+            std::cerr << "Minimum expansion factor must be less than the maximum expansion factor." << std::endl;
+            MPI_Abort(MPI_COMM_WORLD, 1);
+        }
+
+
+
         uint num_cells = 101;
         uint average_particles_per_cell = 13;
         double width = 100.0;
