@@ -50,7 +50,7 @@ Simulation::Simulation(double t_max, double t_step, particle_group collection, d
 
 
 Simulation::~Simulation(){
-    fftw_free(density_buffer);
+    fftw_free(density_buffer); // deallocate manually allocated memory in heap to prevent memory leak
     fftw_free(potential_buffer);
     fftw_free(k_space_buffer);
 
@@ -60,7 +60,7 @@ Simulation::~Simulation(){
 
 void Simulation::run(std::optional<std::string> output_folder)
 {
-    std::string ppc = findsigfig(static_cast<double>(particle_collection.num_particles)/static_cast<double>(number_of_cells * number_of_cells * number_of_cells));
+    std::string ppc = findsigfig(static_cast<double>(particle_collection.get_num_particles())/static_cast<double>(number_of_cells * number_of_cells * number_of_cells));
     
     double t = 0.0;
     uint counter = 0;
@@ -86,10 +86,10 @@ void Simulation::run(std::optional<std::string> output_folder)
 }
 
 void Simulation::fill_density_buffer(){
-    std::memset(density_buffer, 0, sizeof(fftw_complex) * number_of_cells * number_of_cells * number_of_cells);
+    std::memset(density_buffer, 0, sizeof(fftw_complex) * number_of_cells * number_of_cells * number_of_cells); // initialise density buffer to 0
     
     #pragma omp parallel for
-    for (uint particle_index = 0; particle_index < particle_collection.num_particles; particle_index++){
+    for (size_t particle_index = 0; particle_index < particle_collection.get_num_particles(); particle_index++){ // iterate through every particle and evaluate position
         particle& current_particle = particle_collection.particles[particle_index];
         uint i = std::floor(current_particle.position[0] * number_of_cells);
         uint j = std::floor(current_particle.position[1] * number_of_cells);
@@ -168,7 +168,7 @@ void Simulation::update_particles(){
     std::vector<std::vector<std::vector<std::array<double, 3>>>> gradient = calculate_gradient(potential_buffer);
     
     #pragma omp parallel for
-    for (uint index = 0; index < particle_collection.num_particles; index++){
+    for (size_t index = 0; index < particle_collection.get_num_particles(); index++){
         particle& current_particle = particle_collection.particles[index];
         uint i = std::floor(current_particle.position[0] * number_of_cells);
         uint j = std::floor(current_particle.position[1] * number_of_cells);
@@ -196,7 +196,7 @@ void Simulation::box_expansion(){
     box_width *= expansion_factor;
 
     #pragma omp parallel for
-    for (uint i = 0; i < particle_collection.num_particles; i++){
+    for (size_t i = 0; i < particle_collection.get_num_particles(); i++){
         particle_collection.particles[i].velocity[0] /= expansion_factor;
         particle_collection.particles[i].velocity[1] /= expansion_factor;
         particle_collection.particles[i].velocity[2] /= expansion_factor;

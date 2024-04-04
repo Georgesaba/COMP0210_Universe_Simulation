@@ -82,7 +82,7 @@ vector<double> correlationFunction(particle_group particles, int n_bins)
     };
     
     // Only take a limited sample of positions if there are too many 
-    int N = std::min(1000, int(particles.num_particles));
+    int N = std::min(1000, int(particles.get_num_particles()));
     for (int i = 0; i < N; i += 1)
     {
         for (int j = i; j < N; j += 1)
@@ -112,7 +112,6 @@ void Save_Correlations_csv(const std::vector<std::vector<double>>& data, const s
     // Check if the file is open
     if (!file.is_open()) {
         throw std::runtime_error("Failed to open the file.");
-        return;
     }
 
     // Output column labels
@@ -202,8 +201,7 @@ std::string findsigfig(double number){
         result += num_as_string[i];
         if (i == idx){
             break;
-        }
-    }
+        }    }
     return result;
 }
 
@@ -213,16 +211,12 @@ std::string formatREALToNDecimalPlaces(double value, uint dp) {
     return oss.str();
 }
 
-/**
- * @brief: Rounds value to decimal place if value is the same as if it was rounded to one more decimal place. e.g. 2.50003 is rounded to 2.5. 2.05 is rounded to 2. 2.34340 is 2.3434. Therefore cuts off values from the first zero to the left.
- * @returns Formatted string with trailing zeros cut off from the left.
-*/
 std::string removeTrailingDecimalPlaces(double value, uint max_dp){
     std::optional<uint> idx;
     for (uint i = 0; i < max_dp - 1; i++){
         double rd1 =  std::stod(formatREALToNDecimalPlaces(value,i)); // converting to double for validation purpose
         double rd2 = std::stod(formatREALToNDecimalPlaces(value,i + 1));
-        if (rd1 == rd2){
+        if (rd1 == rd2){ // if rounding to n and n+1 dp is the same then can be safely rounded to n
             idx.emplace(i);
             break;
         }

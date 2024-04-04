@@ -4,9 +4,7 @@
 #include <iostream>
 
 
-/**
- * @brief: Constructor for particle class assigning particle positions.
-*/
+
 particle::particle(const std::array<double, 3> &initial_position){
     for (double pos: initial_position){
         if (pos > 1 || pos < 0){
@@ -20,9 +18,6 @@ particle::particle(const std::array<double, 3> &initial_position){
 }
 
 
-/**
- * @brief: Constructor for particle_group class sllowing for user input of all particle positions.
-*/
 particle_group::particle_group(double mass, uint num_particles, const std::vector<std::array<double,3>> &positions) : 
                             mass(mass), num_particles(num_particles) 
 {
@@ -38,9 +33,6 @@ particle_group::particle_group(double mass, uint num_particles, const std::vecto
 }
 
 
-/**
- * @brief: Constructor for particle_group class allowing for randomised assignment of particle positions inside unit cube.
-*/
 particle_group::particle_group(double mass, uint num_particles, uint random_seed) :
                             mass(mass), num_particles(num_particles)
 {
@@ -59,4 +51,9 @@ particle_group::particle_group(double mass, uint num_particles, uint random_seed
         }
         particles.push_back(particle(initial_position));
     }
+}
+
+size_t particle_group::get_num_particles(){
+    num_particles = particles.size();
+    return num_particles;
 }
