@@ -5,7 +5,9 @@
 #include <memory>
 #include "Utils.hpp"
 
-
+/**
+ * @brief: This function prints a help message for the NBody_Visualiser application
+*/
 void HelpMessage(){
     std::cout << "This program visualises a developing universe through modelling the graviational fields of multiple particles with the same mass using the particle mesh method.\n\nBrief instructions can be found below." << std::endl;
     std::cout << "Usage: NBody_Visualiser -nc <number_of_cells> -np <average_particles_per_cell> -t <total_time> -dt <time_step> -F <expansion_factor> -o <output_folder> -s <random_seed>\n"
@@ -74,7 +76,6 @@ int main(int argc, char** argv)
             std::string arg1(argv[i+1]);
             average_particles_per_cell = std::stod(arg1.c_str()); // double so more flexibility is possible. Performance impact is negligible
             average_particle_per_cell_set = true;
-            
         } 
         else if (arg == "-t"){ 
             if (max_time_set){
