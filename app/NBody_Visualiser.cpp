@@ -65,6 +65,9 @@ int main(int argc, char** argv)
             }
             std::string arg1(argv[i+1]);
             num_cells = std::atoi(arg1.c_str());
+            if (num_cells > 220){
+                std::cerr << "Warning - Process may be killed as the number of cells exceeds 220! Reduce the -np or -nc settings if this happens!" << std::endl;
+            }
             num_cells_set = true;
         }
         else if (arg == "-np"){
@@ -139,6 +142,11 @@ int main(int argc, char** argv)
     try{
         particle_group particles(mass, num_particles, random_seed);
         Simulation_ptr = std::make_unique<Simulation>(max_time, time_step, particles, width, num_cells, expansion_factor);
+    }
+    catch (const std::bad_alloc &e){
+        std::cerr << "Error - Memory Overflow: Please use smaller values for -nc <number_of_cells> or -np <average_number_particles_per_cell> arguments!" << std::endl;
+        HelpMessage();
+        return 1;
     }
     catch(const std::exception &e){
         std::cerr << e.what() << std::endl;

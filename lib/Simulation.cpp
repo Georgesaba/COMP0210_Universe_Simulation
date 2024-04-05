@@ -29,8 +29,8 @@ Simulation::Simulation(double t_max, double t_step, particle_group collection, d
     if (num_cells > std::numeric_limits<int>::max()){
         throw std::overflow_error("Error - The number of cells stated is invalid.");
     }
-    if (num_cells > 1000000000){
-        std::cerr << "Warning - num_cells (Grid Length) has been set to more than 1,000,000,000 units! This may have adverse effects on performance." << std::endl;
+    if (num_cells > 400){
+        std::cerr << "Warning - num_cells (Grid Length) has been set to more than 400 units! This may have adverse effects on performance." << std::endl;
     }
     // allocate and instantiate density buffer
     uint buffer_length = number_of_cells * number_of_cells * number_of_cells;
